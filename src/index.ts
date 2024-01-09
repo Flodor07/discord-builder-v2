@@ -15,6 +15,7 @@ export const manager = await new ExtendedClient({
     customOptions: {
         commandDir: path.join(__dirname, 'commands'),
         eventDir: path.join(__dirname, 'events'),
+        addonDir: path.join(__dirname, 'addons'),
     },
 }).initHandlers();
 

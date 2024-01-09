@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { CommandInteraction, Message } from 'discord.js';
 import { ExtendedClient } from './bot/client';
-import { Command } from './bot/handler/command';
+import { Command, CommandConfig } from './bot/handler/command';
 
 export const logger = {
     info: (...message: string[]) =>
@@ -11,6 +11,21 @@ export const logger = {
     error: (...message: string[]) =>
         console.log(chalk.redBright('[ERROR]    '), ...message),
     empty: () => console.log(' '),
+    line: () => console.log('============================'),
+};
+
+export const getFormattedPerms = (
+    config: CommandConfig,
+    type: 'bot' | 'user'
+) => {
+    const permLength = config.requiredPermissions?.[type];
+    if (permLength) {
+        if (permLength.length > 0) {
+            return permLength.reduce((p, c) => p | c);
+        }
+    }
+
+    return undefined;
 };
 
 export const commandCooldown = async (
@@ -84,10 +99,10 @@ export const botPermission = async (
 ) => {
     let isBotAuthorised: boolean = true;
 
-    const perms =
-        command.commandInfo.commandConfig.requiredPermissions?.bot?.reduce(
-            (p, c) => p | c
-        );
+    if (!command.commandInfo.commandConfig.requiredPermissions?.bot)
+        return true;
+
+    const perms = getFormattedPerms(command.commandInfo.commandConfig, 'bot');
     if (!perms) return true;
 
     const botMember = sender.guild?.members.cache.get(client.user?.id!)!;
@@ -124,11 +139,9 @@ export const userPermision = async (
     const member = sender.guild?.members.cache.get(userId)!;
     if (!member) return false;
 
-    const perms =
-        command.commandInfo.commandConfig.requiredPermissions?.user?.reduce(
-            (p, c) => p | c
-        );
+    const perms = getFormattedPerms(command.commandInfo.commandConfig, 'user');
     if (!perms) return true;
+
     if (member.permissions.missing(perms).length > 0) isUserAuthorised = false;
 
     if (!isUserAuthorised)

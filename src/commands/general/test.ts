@@ -13,7 +13,7 @@ export default new Command({
         name: 'test',
         category: 'test',
         enabled: true,
-        cooldown: 1000 * 60 * 60 * 24,
+        cooldown: 1000,
         legacyCommand: {
             name: 'test',
             leagacyRun(manager, message, args) {

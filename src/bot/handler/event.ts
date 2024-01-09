@@ -1,7 +1,6 @@
 import { ClientEvents } from 'discord.js';
 import fs from 'fs';
 import path from 'path';
-import { manager } from '../..';
 import { logger } from '../../utils';
 import { ExtendedClient } from '../client';
 
@@ -16,12 +15,11 @@ export class EventHandler {
 
     async initialize() {
         for (let i = 0; i < this.eventFiles.length; i++) {
-            import(
+            const module = await import(
                 `file://` + path.join(this.eventDir, this.eventFiles[i])
-            ).then((module) => {
-                if (!(module.default instanceof EventListener)) return;
-                logger.info(`listening to event "${module.default.name}"`);
-            });
+            );
+            if (!(module.default instanceof EventListener)) return;
+            (module.default as EventListener<any>).initialize(this.manager);
         }
 
         return this;
@@ -34,11 +32,19 @@ export class EventListener<TEvent extends keyof ClientEvents> {
             manager: ExtendedClient,
             ...params: ClientEvents[TEvent]
         ) => Promise<any> | any
-    ) {
-        manager.events.push({ name, handler });
+    ) {}
+
+    initialize(manager: ExtendedClient) {
+        logger.info(`listening to event "${this.name}"`);
+
+        manager.events.push({
+            name: this.name,
+            handler: this.handler,
+        });
+
         manager.on(
-            name,
-            async (...params) => await handler(manager, ...params)
+            this.name,
+            async (...params) => await this.handler(manager, ...params)
         );
     }
 }

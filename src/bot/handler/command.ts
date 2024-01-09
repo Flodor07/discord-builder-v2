@@ -9,7 +9,7 @@ import {
 import * as fs from 'fs';
 import path from 'path';
 import { env } from '../../env';
-import { logger } from '../../utils';
+import { getFormattedPerms, logger } from '../../utils';
 import { ExtendedClient } from '../client';
 
 type LegacyCommandData = {
@@ -24,7 +24,7 @@ type LegacyCommandData = {
 type SlashCommandData = {
     name: string;
     nsfw?: boolean;
-    description?: string;
+    description: string;
     autoComplete?: (
         manager: ExtendedClient,
         interaction: AutocompleteInteraction
@@ -53,7 +53,7 @@ type MessageContextCommandData = {
     ) => Promise<any> | any;
 };
 
-type CommandConfig = {
+export type CommandConfig = {
     guildOnly?: boolean;
     requiredPermissions?: {
         user?: bigint[];
@@ -84,7 +84,7 @@ type CommandType = {
 export class Command {
     constructor(public commandInfo: CommandType) {}
 
-    public initialize(manager: ExtendedClient) {
+    initialize(manager: ExtendedClient) {
         let currentCommandName;
 
         if (this.commandInfo.commandData.legacyCommand) {
@@ -183,10 +183,10 @@ export class CommandHandler {
     async registerCommands(manager: ExtendedClient, botId: string) {
         const rawSlashCommands = manager.slashCommands.map((command, key) => {
             const slashCommand = command.commandInfo.commandData.slashCommand!;
-            const memberPermission =
-                command.commandInfo.commandConfig.requiredPermissions?.user
-                    ?.reduce((p, c) => p | c)
-                    .toString();
+            const memberPermission = getFormattedPerms(
+                command.commandInfo.commandConfig,
+                'user'
+            )?.toString();
 
             return {
                 name: slashCommand.name,
@@ -207,10 +207,11 @@ export class CommandHandler {
             (command, key) => {
                 const userCommand =
                     command.commandInfo.commandData.userContextCommand!;
-                const memberPermission =
-                    command.commandInfo.commandConfig.requiredPermissions?.user
-                        ?.reduce((p, c) => p | c)
-                        .toString();
+
+                const memberPermission = getFormattedPerms(
+                    command.commandInfo.commandConfig,
+                    'user'
+                )?.toString();
 
                 return {
                     name: userCommand.name,
