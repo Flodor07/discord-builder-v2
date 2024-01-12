@@ -57,6 +57,8 @@ export class ExtendedClient extends Client {
     async initHandlers() {
         this.rest = new REST({ version: '10' }).setToken(env.DISCORD_TOKEN);
 
+        console.clear();
+
         const addonHandler = await new AddonHandler(
             this,
             this.customOptions.addonDir
